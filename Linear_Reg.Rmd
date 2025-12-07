@@ -1,0 +1,179 @@
+```{r}
+data <- read.csv("Student_Performance.csv") 
+
+```
+
+```{r}
+head(data)
+```
+
+```{r}
+# R Code to achieve 0/1 encoding:
+data$Extracurricular.Activities <- ifelse(data$Extracurricular.Activities == "Yes", 1, 0)
+
+# Display the data frame (equivalent to printing 'data' in Python)
+print(data)
+```
+
+
+```{r}
+Data<- na.omit(data)
+```
+
+```{r}
+data
+```
+
+```{r}
+colSums(is.na(Data))
+```
+
+```{r}
+Data <- as.matrix(Data)
+```
+
+```{r}
+X <- Data[, c(1, 2,3,4,5)]
+y <- Data[, 3, drop = FALSE]  
+```
+
+```{r}
+X <- scale(X) 
+```
+
+```{r}
+m <- length(y)
+x_extend <- cbind(rep(1, m), X)
+x_extend
+```
+
+```{r}
+
+
+costfunction <- function(X, y, theta) {
+    m <- length(y)
+    
+  
+    h <- X %*% theta
+    
+   
+    error <- h - y
+    
+    
+    J <- (1 / (2 * m)) * sum(error^2)
+    
+    return(J)
+}
+```
+
+```{r}
+# 1. Initialize Parameters
+num_params <- ncol(x_extend)
+initial_theta <- matrix(0, nrow = num_params, ncol = 1)
+
+# 2. Call the cost function once
+cost_initial <- costfunction(x_extend, y, initial_theta)
+
+# 3. Print the result
+cat("Initial Cost (MSE/2):\n", cost_initial, "\n")
+```
+
+
+```{r}
+
+gradient_descent <- function(X, y, theta, alpha, num_iters) {
+    
+    m <- nrow(X) 
+    J_history <- numeric(num_iters) 
+    y <- as.matrix(y)
+    theta <- as.matrix(theta)
+    
+   
+    for (i in 1:num_iters) {
+        
+       
+        h_theta <- X %*% theta
+        
+    
+        error <- h_theta - y
+        
+        gradient <- (t(X) %*% error) / m
+        
+        theta <- theta - (alpha * gradient)
+        
+        J_history[i] <- (1 / (2 * m)) * sum(error^2)
+    }
+    
+    return(list(theta = theta, j_history = J_history))
+}
+
+# =================================================================
+```
+
+```{r}
+result <- gradient_descent(X = x_extend, y = y, theta = initial_theta, alpha = 0.1, num_iters = 1500)
+theta_final <- result$theta
+```
+
+
+```{r}
+y_hat <- x_extend %*% theta_final
+
+
+m <- nrow(x_extend) 
+
+residuals <- y_hat - y
+
+SSR <- sum(residuals^2)
+
+
+SST <- sum((y - mean(y))^2)
+
+MSE <- SSR / m
+cat("Mean Squared Error (MSE):", MSE, "\n")
+
+RMSE <- sqrt(MSE)
+cat("Root Mean Squared Error (RMSE):", RMSE, "\n")
+
+
+R_squared <- 1 - (SSR / SST)
+cat("R-squared (R²):", R_squared, "\n")
+
+
+n_params <- ncol(x_extend) 
+Adj_R_squared <- 1 - ( (1 - R_squared) * (m - 1) / (m - n_params) )
+cat("Adjusted R-squared:", Adj_R_squared, "\n")
+```
+
+```{r}
+
+plot(1:length(j_history), j_history, 
+     type = 'l', 
+     col = 'blue', 
+     xlab = "Number of Iterations", 
+     ylab = "Cost J(theta)", 
+     main = "Convergence of Gradient Descent")
+```
+
+```{r}
+
+plot(y_hat, residuals, 
+     main = "Residuals vs. Fitted Values", 
+     xlab = "Fitted Values (y_hat)", 
+     ylab = "Residuals", 
+     pch = 20)
+abline(h = 0, col = "red", lty = 2)
+
+
+hist(residuals, 
+     main = "Histogram of Residuals", 
+     xlab = "Residuals", 
+     breaks = 20, 
+     col = "lightblue")
+```
+
+```{r}
+cat("\nInterpretation of Coefficients:\n")
+print(theta_final)
+```
+

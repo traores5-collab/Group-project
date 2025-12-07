@@ -1,0 +1,124 @@
+```{r}
+data <- read.csv("diabetes2.csv") 
+```
+
+```{r}
+data
+```
+
+```{r}
+data_matrix <- as.matrix(data)
+```
+
+```{r}
+data_matrix
+```
+
+```{r}
+X <- data_matrix[, 1:8]  
+
+```
+
+```{r}
+X
+```
+```{r}
+y <- data_matrix[, 9, drop = FALSE] 
+
+```
+
+```{r}
+y
+```
+
+```{r}
+
+critical_cols <- c(2, 3, 4, 5, 6) 
+
+
+for(i in critical_cols) {
+  X[X[, i] == 0, i] <- NA
+}
+
+for(i in critical_cols) {
+  median_val <- median(X[, i], na.rm = TRUE)
+  X[is.na(X[, i]), i] <- median_val
+}
+```
+
+```{r}
+X_scaled <- scale(X)
+m <- length(y)
+X_extend <- cbind(rep(1, m), X_scaled)
+```
+
+```{r}
+sigmoid <- function(z) {
+  return(1 / (1 + exp(-z)))
+}
+
+costFunction <- function(theta, X, y) {
+  m <- length(y)
+  h <- sigmoid(X %*% theta)
+  
+  epsilon <- 1e-15
+  h[h > (1 - epsilon)] <- 1 - epsilon
+  h[h < epsilon] <- epsilon
+  
+  j <- (-1 / m) * (t(log(h)) %*% y + t(log(1 - h)) %*% (1 - y))
+  
+  return(as.numeric(j[1, 1]))
+}
+
+gradient_descent <- function(X, y, alpha = 0.1, num_iters = 1500) {
+  m <- length(y)
+  theta <- matrix(0, nrow = ncol(X), ncol = 1)
+  j_history <- numeric(num_iters)
+  
+  for (i in 1:num_iters) {
+    h <- sigmoid(X %*% theta)
+    
+    grad <- (1 / m) * t(X) %*% (h - y)
+    
+    theta <- theta - alpha * grad
+    
+    j_history[i] <- costFunction(theta, X, y)
+  }
+  
+  return(list(theta = theta, j_history = j_history))
+}
+```
+
+```{r}
+# Running the training: Ensure X_extend and y are already defined from previous steps
+# (cleaned, scaled, and intercept added)
+result <- gradient_descent(X = X_extend, y = y, alpha = 0.1, num_iters = 1500)
+
+theta_final <- result$theta
+j_history <- result$j_history
+
+cat("Final Model Parameters (Theta):\n")
+print(theta_final)
+```
+
+```{r}
+plot(j_history, type = "l", 
+     xlab = "Number of Iterations", 
+     ylab = "Cost J (Negative Log-Likelihood)",
+     main = "Convergence of Logistic Regression")
+```
+
+```{r}
+
+predict_outcome <- function(theta, X) {
+  h <- sigmoid(X %*% theta)
+  predictions <- ifelse(h >= 0.5, 1, 0)
+  
+  return(predictions)
+}
+
+predictions <- predict_outcome(theta_final, X_extend)
+accuracy <- mean(predictions == y)
+
+cat("Model Training Accuracy:\n", accuracy * 100, "%\n")
+```
